@@ -1,11 +1,13 @@
 name:                hspec-wai-servant
 version:             0.1.0.0
--- synopsis:
--- description:
+synopsis: servant-client generation for hspec-wai
+description: Automatically generate functions to call your servant API in Test.Hspec.Wai-style tests
 license:             BSD3
 license-file:        LICENSE
 author:              Armando Ramirez
 maintainer:          armando.m.ramirez@gmail.com
+homepage: https://github.com/ramirez7/hspec-wai-servant
+bug-reports: https://github.com/ramirez7/hspec-wai-servant/issues
 -- copyright:
 category:            Testing
 build-type:          Simple
@@ -18,7 +20,7 @@ library
     Test.Hspec.Wai.Servant.Assertions
     Test.Hspec.Wai.Servant.Client
     Test.Hspec.Wai.Servant.Types
-  ghc-options: -Wall -Werror
+  ghc-options: -Wall
   build-depends:
       base >=4.9 && <4.10
     , hspec-wai
@@ -29,7 +31,6 @@ library
     , http-types
     , http-media
     , text
-    , servant-client ==0.9.*
     , servant ==0.9.*
   hs-source-dirs:      src
   default-language:    Haskell2010
@@ -39,7 +40,7 @@ test-suite spec
   main-is: test.hs
   hs-source-dirs:
       test
-  ghc-options: -Wall -Werror
+  ghc-options: -Wall
   build-depends:
       base >=4.9 && <4.10
     , hspec
@@ -52,3 +53,7 @@ test-suite spec
     , hspec-wai-servant
   other-modules:
     ClientSpec
+
+source-repository head
+  type: git
+  location: https://github.com/ramirez7/hspec-wai-servant.git

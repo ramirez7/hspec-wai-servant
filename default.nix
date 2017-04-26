@@ -6,8 +6,7 @@ let
 
   f = { mkDerivation, base, bytestring, bytestring-conversion
       , case-insensitive, hspec, hspec-wai, http-media, http-types, mtl
-      , servant, servant-client, servant-server, stdenv, text, wai
-      , wai-extra
+      , servant, servant-server, stdenv, text, wai, wai-extra
       }:
       mkDerivation {
         pname = "hspec-wai-servant";
@@ -15,11 +14,13 @@ let
         src = ./.;
         libraryHaskellDepends = [
           base bytestring bytestring-conversion case-insensitive hspec-wai
-          http-media http-types servant servant-client text wai-extra
+          http-media http-types servant text wai-extra
         ];
         testHaskellDepends = [
           base bytestring hspec mtl servant servant-server text wai
         ];
+        homepage = "https://github.com/ramirez7/hspec-wai-servant";
+        description = "servant-client generation for hspec-wai";
         license = stdenv.lib.licenses.bsd3;
       };
 
