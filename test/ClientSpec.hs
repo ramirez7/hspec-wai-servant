@@ -7,15 +7,15 @@ module ClientSpec where
 import           Test.Hspec
 import           Test.Hspec.Wai.Servant
 
-import           Control.Monad.Except (throwError)
-import qualified Data.ByteString      as B
-import           Data.Maybe           (maybeToList)
-import           Data.Proxy           (Proxy (..))
-import qualified Data.Text            as T
+import           Control.Monad.Except   (throwError)
+import qualified Data.ByteString        as B
+import           Data.Maybe             (maybeToList)
+import           Data.Proxy             (Proxy (..))
+import qualified Data.Text              as T
 
-import           Network.Wai          (Application)
+import           Network.Wai            (Application)
 import           Servant.API
-import           Servant.Server       (Server, err400, err500, serve)
+import           Servant.Server         (Server, err400, err500, serve)
 
 spec :: Spec
 spec =

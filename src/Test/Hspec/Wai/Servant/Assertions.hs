@@ -8,9 +8,9 @@ module Test.Hspec.Wai.Servant.Assertions
   , succeed
   ) where
 
-import qualified Test.Hspec.Wai           as W
-import           Data.Functor             (void)
-import           GHC.Stack                (HasCallStack)
+import           Data.Functor                 (void)
+import           GHC.Stack                    (HasCallStack)
+import qualified Test.Hspec.Wai               as W
 
 import           Test.Hspec.Wai.Servant.Types
 
