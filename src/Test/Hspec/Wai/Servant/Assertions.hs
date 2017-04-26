@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 -- | Assertions for use with the result of the generated client functions
-module Test.Hspec.Servant.Assertions
+module Test.Hspec.Wai.Servant.Assertions
   ( shouldRespondWith
   , shouldRespondWith_
   , succeed
@@ -12,7 +12,7 @@ import qualified Test.Hspec.Wai           as W
 import           Data.Functor             (void)
 import           GHC.Stack                (HasCallStack)
 
-import           Test.Hspec.Servant.Types
+import           Test.Hspec.Wai.Servant.Types
 
 -- | Like @shouldRespondWith@ from 'Test.Hspec.Wai', but ...
 -- 1) operates on @WaiSession (TestResponse a)@ instead of @(WaiSession SResponse)@

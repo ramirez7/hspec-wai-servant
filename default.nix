@@ -10,7 +10,7 @@ let
       , wai-extra
       }:
       mkDerivation {
-        pname = "hspec-servant";
+        pname = "hspec-wai-servant";
         version = "0.1.0.0";
         src = ./.;
         libraryHaskellDepends = [

@@ -14,7 +14,7 @@
 -- on top of 'Test.Hspec.Wai'
 --
 -- Not every servant API combinator is implemented yet.
-module Test.Hspec.Servant.Client
+module Test.Hspec.Wai.Servant.Client
   ( client
   , HasTestClient
   ) where
@@ -34,7 +34,7 @@ import qualified Network.HTTP.Types              as HT
 import           Servant.API
 import           Servant.Common.Req              (ServantError (..))
 
-import           Test.Hspec.Servant.Types
+import           Test.Hspec.Wai.Servant.Types
 
 -- | Works just like @client@ from 'Servant.Client', but the returned values are
 -- @WaiSession (TestResponse a)@ instead of @ClientM a@

@@ -5,7 +5,7 @@
 module ClientSpec where
 
 import           Test.Hspec
-import           Test.Hspec.Servant
+import           Test.Hspec.Wai.Servant
 
 import           Control.Monad.Except (throwError)
 import qualified Data.ByteString      as B

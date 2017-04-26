@@ -2,7 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 
-module Test.Hspec.Servant.Types where
+module Test.Hspec.Wai.Servant.Types where
 
 import           Network.Wai.Test                (SResponse (..))
 import           Test.Hspec.Wai
