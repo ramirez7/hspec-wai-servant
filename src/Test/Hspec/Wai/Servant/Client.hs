@@ -22,15 +22,13 @@ module Test.Hspec.Wai.Servant.Client
 import           Network.Wai.Test                (SResponse (..))
 import           Test.Hspec.Wai
 
-import           Control.Exception               (Exception, throwIO)
+import           Control.Arrow                   (left)
 import qualified Data.ByteString.Char8           as BC
 import qualified Data.ByteString.Lazy            as BL
 import qualified Data.CaseInsensitive            as CI
 import           Data.Monoid                     ((<>))
 import           Data.Proxy
-import           Data.Typeable                   (Typeable)
 import           GHC.TypeLits
-import qualified Network.HTTP.Media.MediaType    as HT
 import qualified Network.HTTP.Media.RenderHeader as HT
 import qualified Network.HTTP.Types              as HT
 import           Servant.API
@@ -55,15 +53,11 @@ performTestRequestCT ctP methodP req@TestRequest{..} =
   in TestResponse (decodeResponse ctP) <$> performTestRequest method reqWithCt
 
 -- | Will throw and fail the test if a fails to parse
-decodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> WaiSession a
-decodeResponse ctProxy resp = liftIO $ either (throwIO . mkError) pure $ mimeUnrender ctProxy (simpleBody resp)
+decodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> Either TestErr a
+decodeResponse ctProxy resp = left mkError $ mimeUnrender ctProxy (simpleBody resp)
   where
     ct = contentType ctProxy
     mkError err = DecodeError err ct (BL.toStrict $ simpleBody resp)
-
-data Err = DecodeError !String !HT.MediaType !BC.ByteString deriving (Show, Typeable)
-
-instance Exception Err
 
 -- | Type class to generate 'WaiSession'-based client handlers. Compare to
 -- 'HasClient' from 'Servant.Client'
