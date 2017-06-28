@@ -17,7 +17,7 @@
 -- multiple 'Application's, each of which is tagged at the type level with a 'Symbol'
 --
 -- This module actually has nothing to do with 'servant', but it is a pain to
--- use multiple 'Application's without 'hspec-wai-servant's auto client generation
+-- use multiple 'Application's without @hspec-wai-servant@'s auto client generation
 -- so that's why it's in this library.
 module Test.Hspec.Wai.WaiMultiSession where
 
@@ -48,39 +48,54 @@ sendWaiSession p _ (WaiSession session) =
   WaiMultiSession $ ReaderT $ \ma ->
     runSession session (getApplication p ma)
 
+-- | Very similar to 'WaiSession', but with a 'MultiApplication'
 newtype WaiMultiSession (tags :: [Symbol]) a =
   WaiMultiSession { unWaiMultiSession :: (ReaderT (MultiApplication tags) IO a) }
   deriving (Functor, Applicative, Monad, MonadIO)
 
+-- | Analogous to 'runWaiSession' from @hspec-wai@
 runWaiMultiSession :: WaiMultiSession tags a -> MultiApplication tags -> IO a
 runWaiMultiSession session app = runReaderT (unWaiMultiSession session) app
 
+-- | Analogous to 'WaiExpectation' from @hspec-wai@
 type WaiMultiExpectation tags = WaiMultiSession tags ()
 
+-- | 'Example' instance to hook into @hspec@ machinery
 instance Example (WaiMultiExpectation tags) where
   type Arg (WaiMultiExpectation tags) = MultiApplication tags
   evaluateExample e p action = evaluateExample (action $ runWaiMultiSession e) p ($ ())
 
+-- | A bunch of 'Application's, each tagged with a type-level string
+-- Like an extensible record of 'Applications'
+-- Really, @tags@ could be a 'NonEmpty's, but then the user would have to
+-- use a bunch of type-level 'NonEmpty's instead of nice list literals
+-- (there is no type-level @-XOverloadedLists@)
 data MultiApplication (tags :: [Symbol]) where
   OneApp :: Application -> MultiApplication '[s]
   ManyApps :: Application -> MultiApplication xs -> MultiApplication (s ': xs)
 
+-- | Type class for plucking out the 'Application' tagged by @s@
 class GetApplication (s :: Symbol) (tags :: [Symbol]) where
   getApplication :: Proxy s -> MultiApplication tags -> Application
 
+-- | 'OneApp' found case
 instance forall (s :: Symbol). GetApplication s '[s] where
   getApplication _ (ManyApps _ _) = error "impossible"
   getApplication _ (OneApp app)   = app
 
+-- | 'ManyApps' found case
 instance {-# OVERLAPPABLE #-} forall (s :: Symbol) (xs :: [Symbol]). GetApplication s (s ': xs) where
   getApplication _ (ManyApps app _) = app
   getApplication _ (OneApp _)       = error "impossible"
 
+-- | 'ManyApps' not found case (continue searching further)
 instance {-# OVERLAPPABLE #-} forall (s :: Symbol) (xs :: [Symbol]) (x :: Symbol)
         . (GetApplication s xs)
        => GetApplication s (x ': xs) where
   getApplication p (ManyApps _ xs) = getApplication p xs
   getApplication _ (OneApp _)      = error "impossible"
+
+-- | 'Show' instances just so ghci doesn't complain
 
 instance KnownSymbol s => Show (MultiApplication '[s]) where
   show (OneApp _)     = show $ symbolVal (Proxy :: Proxy s)
@@ -91,6 +106,8 @@ instance {-# OVERLAPPABLE #-} forall (s :: Symbol) (xs :: [Symbol])
        => Show (MultiApplication (s ': xs)) where
   show (ManyApps _ xs) = show (symbolVal (Proxy :: Proxy s)) ++ " : " ++ show xs
   show (OneApp _) = error "impossible"
+
+-- | 'IsList' instances for ergonomics
 
 instance forall (s :: Symbol). GHCX.IsList (MultiApplication '[s]) where
   type Item (MultiApplication '[s]) = Application

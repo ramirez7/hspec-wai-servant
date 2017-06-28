@@ -3,12 +3,12 @@
 
 -- | Assertions for use with the result of the generated client functions
 module Test.Hspec.Wai.Servant.Assertions
-  ( shouldRespondWith
+  ( MonadHspecWai (..)
   , shouldRespondWith_
   , succeed
   ) where
 
-import           Control.Monad.IO.Class         (MonadIO(..))
+import           Control.Monad.IO.Class         (MonadIO (..))
 import           Data.Foldable                  (for_)
 import           Data.Functor                   (void)
 import           GHC.Stack                      (HasCallStack)

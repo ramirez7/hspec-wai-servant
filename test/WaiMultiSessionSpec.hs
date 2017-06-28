@@ -35,7 +35,7 @@ The API call graph for these tests looks like this
     |                  |
 /api/from_b        /api/from_a
     |                  |
-    -------> C <--------
+    -----> SumABC <-----
              |
          /api/sum/:c
              |
@@ -43,7 +43,7 @@ The API call graph for these tests looks like this
 
 The for_* APIs return the value of an IORef
 The from_* APIs return the value from the other service
-The sum API calls the two from_* APIs and adds their values with the provided :c
+The SumABC API calls the two from_* APIs and adds their values with the provided :c
 -}
 
 spec :: Spec
