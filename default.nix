@@ -5,19 +5,21 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, bytestring, bytestring-conversion
-      , case-insensitive, hspec, hspec-wai, http-media, http-types, mtl
-      , servant, servant-server, stdenv, text, wai, wai-extra
+      , case-insensitive, hspec, hspec-core, hspec-wai, http-media
+      , http-types, mtl, servant, servant-server, stdenv, text, wai
+      , wai-extra
       }:
       mkDerivation {
         pname = "hspec-wai-servant";
         version = "0.1.0.0";
         src = ./.;
         libraryHaskellDepends = [
-          base bytestring bytestring-conversion case-insensitive hspec-wai
-          http-media http-types servant text wai-extra
+          base bytestring bytestring-conversion case-insensitive hspec
+          hspec-core hspec-wai http-media http-types mtl servant text wai
+          wai-extra
         ];
         testHaskellDepends = [
-          base bytestring hspec mtl servant servant-server text wai
+          base bytestring hspec hspec-wai mtl servant servant-server text wai
         ];
         homepage = "https://github.com/ramirez7/hspec-wai-servant";
         description = "servant-client generation for hspec-wai";
