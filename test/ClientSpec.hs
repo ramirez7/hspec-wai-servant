@@ -27,6 +27,7 @@ spec =
         idDelete 3 `shouldRespondWith_` 200
         idPost 4 `shouldRespondWith_` 200
         qparamMaybeToList (Just 5) `shouldRespondWith_` 200
+        take' 2 [1,2,3,4,5] `shouldRespondWith_` 200
         reqbodyLength "abc123" `shouldRespondWith_` 200
         someHeaderLength (Just "xyz987") `shouldRespondWith_` 200
         _400s `shouldRespondWith_` 400
@@ -38,6 +39,7 @@ spec =
         succeed (idDelete 3) >>= liftIO . (`shouldBe` 3)
         succeed (idPost 4) >>= liftIO . (`shouldBe` 4)
         succeed (qparamMaybeToList (Just 5)) >>= liftIO . (`shouldBe` [5])
+        succeed (take' 2 [1,2,3,4,5]) >>= liftIO . (`shouldBe` [1,2])
         succeed (reqbodyLength "abc123") >>= liftIO . (`shouldBe` 6)
         succeed (someHeaderLength (Just "xyz987")) >>= liftIO . (`shouldBe` 6)
 
@@ -47,6 +49,7 @@ type API =
   :<|> "api" :> "identity" :> Capture "arg" Int :> Delete '[JSON] Int
   :<|> "api" :> "identity" :> Capture "arg" Int :> Post '[JSON] Int
   :<|> "api" :> "maybeToList" :> QueryParam "qparam" Int :> Get '[JSON] [Int]
+  :<|> "api" :> "take" :> Capture "arg" Int :> QueryParams "qparam" Int :> Get '[JSON] [Int]
   :<|> "api" :> "postBodyLength" :> ReqBody '[OctetStream] B.ByteString :> Post '[JSON] Int
   :<|> "api" :> "someHeaderLength" :> Header "whatever" T.Text :> Get '[JSON] Int
   :<|> "api" :> "_400s" :> Get '[JSON] ()
@@ -64,6 +67,7 @@ server = pure
     :<|> pure
     :<|> pure
     :<|> pure . maybeToList
+    :<|> (pure .) . take
     :<|> pure . B.length
     :<|> pure . maybe 0 T.length
     :<|> throwError err400
@@ -74,6 +78,7 @@ idPut :: Int -> WaiSession (TestResponse Int)
 idDelete :: Int -> WaiSession (TestResponse Int)
 idPost :: Int -> WaiSession (TestResponse Int)
 qparamMaybeToList :: Maybe Int -> WaiSession (TestResponse [Int])
+take' :: Int -> [Int] -> WaiSession (TestResponse [Int])
 reqbodyLength :: B.ByteString -> WaiSession (TestResponse Int)
 someHeaderLength :: Maybe T.Text -> WaiSession (TestResponse Int)
 _400s :: WaiSession (TestResponse ())
@@ -85,6 +90,7 @@ _500s :: WaiSession (TestResponse ())
   :<|> idPost
   :<|>
   qparamMaybeToList
+  :<|> take'
   :<|> reqbodyLength
   :<|> someHeaderLength
   :<|> _400s

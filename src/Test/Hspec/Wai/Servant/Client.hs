@@ -114,6 +114,18 @@ instance (KnownSymbol sym, ToHttpApiData a, HasTestClient api)
       api = Proxy :: Proxy api
       qname = symbolVal (Proxy :: Proxy sym)
 
+instance (KnownSymbol sym, ToHttpApiData a, HasTestClient api)
+      => HasTestClient (QueryParams sym a :> api) where
+
+  type TestClient (QueryParams sym a :> api) =
+    [a] -> TestClient api
+
+  testClientWithRoute Proxy req params =
+    testClientWithRoute api (appendManyToQueryString qname params req)
+    where
+      api = Proxy :: Proxy api
+      qname = symbolVal (Proxy :: Proxy sym)
+
 instance (MimeRender ct a, HasTestClient api)
       => HasTestClient (ReqBody (ct ': cts) a :> api) where
   type TestClient (ReqBody (ct ': cts) a :> api) =

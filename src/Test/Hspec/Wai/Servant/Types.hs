@@ -7,13 +7,13 @@ module Test.Hspec.Wai.Servant.Types where
 import           Network.Wai.Test                (SResponse (..))
 import           Test.Hspec.Wai
 
-import           Data.ByteString                 as B
-import           Data.ByteString.Char8           as BC
+import qualified Data.ByteString                 as B
+import qualified Data.ByteString.Char8           as BC
 import           Data.ByteString.Conversion.To   (toByteString')
-import           Data.ByteString.Lazy            as BL
+import qualified Data.ByteString.Lazy            as BL
 import           Data.Monoid                     ((<>))
 import           Data.Proxy                      (Proxy (..))
-import           Network.HTTP.Media.RenderHeader as HT
+import qualified Network.HTTP.Media.RenderHeader as HT
 import qualified Network.HTTP.Types              as HT
 import           Servant.API                     (MimeRender (..),
                                                   ToHttpApiData (..),
@@ -37,6 +37,10 @@ appendHeader hn a req = req { testHeaders = (hn, toHeader a) : testHeaders req }
 
 appendToQueryString :: ToHttpApiData a => String -> Maybe a -> TestRequest -> TestRequest
 appendToQueryString k v req = req { testQuery = (BC.pack k, toByteString' . toQueryParam <$> v) : testQuery req }
+
+-- | Appends in the same order as the given list
+appendManyToQueryString :: ToHttpApiData a => String -> [a] -> TestRequest -> TestRequest
+appendManyToQueryString k as req = foldr (\a acc -> appendToQueryString k (Just a) acc) req as
 
 setReqBody :: (MimeRender ct a) => Proxy ct -> a -> TestRequest -> TestRequest
 setReqBody ctP a req = req { testBody = mimeRender ctP a, testHeaders = ("content-type", HT.renderHeader (contentType ctP)) : testHeaders req }
