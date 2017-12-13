@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
 
 -- | Assertions for use with the result of the generated client functions
 module Test.Hspec.Wai.Servant.Assertions
@@ -8,10 +9,12 @@ module Test.Hspec.Wai.Servant.Assertions
   , succeed
   ) where
 
+import           Control.Monad.IO.Class       (liftIO)
 import           Data.Functor                 (void)
 import           GHC.Stack                    (HasCallStack)
 import           Network.HTTP.Types.Status    (ok200)
 import           Network.Wai.Test             (SResponse (..))
+import           Test.Hspec.Expectations      (expectationFailure)
 import qualified Test.Hspec.Wai               as W
 
 import           Test.Hspec.Wai.Servant.Types
@@ -36,4 +39,5 @@ succeed action = do
   tresp@(TestResponse _ sres@ (SResponse status _ _)) <- action
   if status == ok200
      then getTestResponse tresp
-     else fail $ "response error:\n  expected: status 200\n  but got: " ++ show sres
+     else do liftIO . expectationFailure $ "response error:\n  expected: status 200\n  but got: " ++ show sres
+             error "unreachable"
