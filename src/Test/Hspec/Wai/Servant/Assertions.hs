@@ -10,6 +10,8 @@ module Test.Hspec.Wai.Servant.Assertions
 
 import           Data.Functor                 (void)
 import           GHC.Stack                    (HasCallStack)
+import           Network.HTTP.Types.Status    (ok200)
+import           Network.Wai.Test             (SResponse (..))
 import qualified Test.Hspec.Wai               as W
 
 import           Test.Hspec.Wai.Servant.Types
@@ -31,5 +33,7 @@ shouldRespondWith_ = (void .) . shouldRespondWith
 -- the response
 succeed :: HasCallStack => W.WaiSession (TestResponse a) -> W.WaiSession a
 succeed action = do
-  tresp <- action `shouldRespondWith` 200
-  getTestResponse tresp
+  tresp@(TestResponse _ sres@ (SResponse status _ _)) <- action
+  if status == ok200
+     then getTestResponse tresp
+     else fail $ "response error:\n  expected: status 200\n  but got: " ++ show sres
