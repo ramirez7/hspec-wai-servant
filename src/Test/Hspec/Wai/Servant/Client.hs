@@ -34,6 +34,8 @@ import qualified Network.HTTP.Media.MediaType    as HT
 import qualified Network.HTTP.Media.RenderHeader as HT
 import qualified Network.HTTP.Types              as HT
 import           Servant.API
+import           Servant.Checked.Exceptions.Internal.Envelope (Envelope)
+import           Servant.Checked.Exceptions.Internal.Servant.API (NoThrow, Throws, Throwing, ThrowingNonterminal)
 
 import           Test.Hspec.Wai.Servant.Types
 
@@ -156,3 +158,72 @@ instance (KnownSymbol path, HasTestClient api) => HasTestClient (path :> api) wh
     where
       api = Proxy :: Proxy api
       path = symbolVal (Proxy :: Proxy path)
+
+-- servant-checked-exception instances
+
+instance (HasTestClient (Throwing '[e] :> api)) => HasTestClient (Throws e :> api) where
+  type TestClient (Throws e :> api) = TestClient (Throwing '[e] :> api)
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy (Throwing '[e] :> api)
+
+instance (HasTestClient (Verb method status ctypes (Envelope es a))) =>
+    HasTestClient (Throwing es :> Verb method status ctypes a) where
+
+  type TestClient (Throwing es :> Verb method status ctypes a) =
+    TestClient (Verb method status ctypes (Envelope es a))
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy (Verb method status ctypes (Envelope es a))
+
+instance (HasTestClient (Verb method status ctypes (Envelope '[] a))) =>
+    HasTestClient (NoThrow :> Verb method status ctypes a) where
+
+  type TestClient (NoThrow :> Verb method status ctypes a) =
+    TestClient (Verb method status ctypes (Envelope '[] a))
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy (Verb method status ctypes (Envelope '[] a))
+
+instance (HasTestClient ((Throwing es :> api1) :<|> (Throwing es :> api2))) =>
+    HasTestClient (Throwing es :> (api1 :<|> api2)) where
+
+  type TestClient (Throwing es :> (api1 :<|> api2)) =
+    TestClient ((Throwing es :> api1) :<|> (Throwing es :> api2))
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy ((Throwing es :> api1) :<|> (Throwing es :> api2))
+
+instance (HasTestClient ((NoThrow :> api1) :<|> (NoThrow :> api2))) =>
+    HasTestClient (NoThrow :> (api1 :<|> api2)) where
+
+  type TestClient (NoThrow :> (api1 :<|> api2)) =
+    TestClient ((NoThrow :> api1) :<|> (NoThrow :> api2))
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy ((NoThrow :> api1) :<|> (NoThrow :> api2))
+
+instance (HasTestClient (ThrowingNonterminal (Throwing es :> api :> apis))) =>
+    HasTestClient (Throwing es :> api :> apis) where
+
+  type TestClient (Throwing es :> api :> apis) =
+    TestClient (ThrowingNonterminal (Throwing es :> api :> apis))
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy (ThrowingNonterminal (Throwing es :> api :> apis))
+
+instance (HasTestClient (api :> NoThrow :> apis)) =>
+    HasTestClient (NoThrow :> api :> apis) where
+
+  type TestClient (NoThrow :> api :> apis) =
+    TestClient (api :> NoThrow :> apis)
+
+  testClientWithRoute Proxy = testClientWithRoute api
+    where
+      api = Proxy :: Proxy (api :> NoThrow :> apis)
