@@ -22,9 +22,8 @@ module Test.Hspec.Wai.Servant.Client
 import           Network.Wai.Test                (SResponse (..))
 import           Test.Hspec.Wai
 
-import           Control.Exception               (Exception, throwIO)
+import           Control.Exception               (Exception)
 import qualified Data.ByteString.Char8           as BC
-import qualified Data.ByteString.Lazy            as BL
 import qualified Data.CaseInsensitive            as CI
 import           Data.Monoid                     ((<>))
 import           Data.Proxy
@@ -34,6 +33,7 @@ import qualified Network.HTTP.Media.MediaType    as HT
 import qualified Network.HTTP.Media.RenderHeader as HT
 import qualified Network.HTTP.Types              as HT
 import           Servant.API
+import           Test.Hspec.Expectations         (expectationFailure)
 
 import           Test.Hspec.Wai.Servant.Types
 
@@ -56,10 +56,15 @@ performTestRequestCT ctP methodP req@TestRequest{..} =
 
 -- | Will throw and fail the test if a fails to parse
 decodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> WaiSession a
-decodeResponse ctProxy resp = liftIO $ either (throwIO . mkError) pure $ mimeUnrender ctProxy (simpleBody resp)
+decodeResponse ctProxy resp = liftIO $ either throwErr pure $ mimeUnrender ctProxy (simpleBody resp)
   where
-    ct = contentType ctProxy
-    mkError err = DecodeError err ct (BL.toStrict $ simpleBody resp)
+    throwErr err = do
+      liftIO $ expectationFailure $ unlines [ "Failed decoding response:"
+                                            , show resp
+                                            , "with error:"
+                                            , show err
+                                            ]
+      error "unreachable"
 
 data Err = DecodeError !String !HT.MediaType !BC.ByteString deriving (Show, Typeable)
 

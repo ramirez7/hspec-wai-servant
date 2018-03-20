@@ -1,6 +1,8 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module ClientSpec where
 
@@ -8,6 +10,8 @@ import           Test.Hspec
 import           Test.Hspec.Wai.Servant
 
 import           Control.Monad.Except   (throwError)
+import           Data.Aeson             as A
+import           Data.Aeson.Types       (typeMismatch)
 import qualified Data.ByteString        as B
 import           Data.Maybe             (maybeToList)
 import           Data.Proxy             (Proxy (..))
@@ -16,6 +20,20 @@ import qualified Data.Text              as T
 import           Network.Wai            (Application)
 import           Servant.API
 import           Servant.Server         (Server, err400, err500, serve)
+
+
+newtype BadValue = BadValue Bool deriving (Show, Eq)
+
+instance ToJSON BadValue where
+  toJSON (BadValue _) = toJSON (1 :: Int)
+
+instance FromJSON BadValue where
+  parseJSON (A.Bool b) = return $ BadValue b
+  parseJSON v          = typeMismatch "BadValue" v
+
+
+--instance MonadError () WaiSession where
+--  throwError () = throw
 
 spec :: Spec
 spec =
@@ -54,6 +72,7 @@ type API =
   :<|> "api" :> "someHeaderLength" :> Header "whatever" T.Text :> Get '[JSON] Int
   :<|> "api" :> "_400s" :> Get '[JSON] ()
   :<|> "api" :> "_500s" :> Get '[JSON] ()
+  :<|> "api" :> "decodingError" :> Get '[JSON] BadValue
 
 api :: Proxy API
 api = Proxy
@@ -72,6 +91,7 @@ server = pure
     :<|> pure . maybe 0 T.length
     :<|> throwError err400
     :<|> throwError err500
+    :<|> pure (BadValue True)
 
 idGet :: Int -> WaiSession (TestResponse Int)
 idPut :: Int -> WaiSession (TestResponse Int)
@@ -83,16 +103,17 @@ reqbodyLength :: B.ByteString -> WaiSession (TestResponse Int)
 someHeaderLength :: Maybe T.Text -> WaiSession (TestResponse Int)
 _400s :: WaiSession (TestResponse ())
 _500s :: WaiSession (TestResponse ())
+decodingError :: WaiSession (TestResponse BadValue)
 
-(     idGet
+(      idGet
   :<|> idPut
   :<|> idDelete
   :<|> idPost
-  :<|>
-  qparamMaybeToList
+  :<|> qparamMaybeToList
   :<|> take'
   :<|> reqbodyLength
   :<|> someHeaderLength
   :<|> _400s
   :<|> _500s
+  :<|> decodingError
   ) = client api

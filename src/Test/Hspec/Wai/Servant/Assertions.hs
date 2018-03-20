@@ -7,6 +7,7 @@ module Test.Hspec.Wai.Servant.Assertions
   ( shouldRespondWith
   , shouldRespondWith_
   , succeed
+  , dontSucceed
   ) where
 
 import           Control.Monad.IO.Class       (liftIO)
@@ -41,3 +42,11 @@ succeed action = do
      then getTestResponse tresp
      else do liftIO . expectationFailure $ "response error:\n  expected: status 200\n  but got: " ++ show sres
              error "unreachable"
+
+-- | Checks if the provided @action@ returns anything other than a 200. If so, sally forth.
+dontSucceed :: HasCallStack => W.WaiSession (TestResponse a) -> W.WaiSession ()
+dontSucceed action = do
+  TestResponse _ sres@(SResponse status _ _) <- action
+  if status /= ok200
+  then return ()
+  else liftIO . expectationFailure $ "response error:\n expected: anything but tsatus 200\n but got: " ++ show sres
