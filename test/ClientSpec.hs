@@ -22,6 +22,9 @@ import           Servant.API
 import           Servant.Server         (Server, err400, err500, serve)
 
 
+-- | A type with a bad ToJSON instance.
+-- This is here to check the decoding error message
+-- by hand (repl).
 newtype BadValue = BadValue Bool deriving (Show, Eq)
 
 instance ToJSON BadValue where
@@ -30,10 +33,6 @@ instance ToJSON BadValue where
 instance FromJSON BadValue where
   parseJSON (A.Bool b) = return $ BadValue b
   parseJSON v          = typeMismatch "BadValue" v
-
-
---instance MonadError () WaiSession where
---  throwError () = throw
 
 spec :: Spec
 spec =
@@ -50,6 +49,7 @@ spec =
         someHeaderLength (Just "xyz987") `shouldRespondWith_` 200
         _400s `shouldRespondWith_` 400
         _500s `shouldRespondWith_` 500
+        dontSucceed _500s
 
       it "should do Response Checks" $ do
         succeed (idGet 1) >>= liftIO . (`shouldBe` 1)

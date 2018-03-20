@@ -49,4 +49,4 @@ dontSucceed action = do
   TestResponse _ sres@(SResponse status _ _) <- action
   if status /= ok200
   then return ()
-  else liftIO . expectationFailure $ "response error:\n expected: anything but tsatus 200\n but got: " ++ show sres
+  else liftIO . expectationFailure $ "response error:\n expected: anything but status 200\n but got: " ++ show sres
