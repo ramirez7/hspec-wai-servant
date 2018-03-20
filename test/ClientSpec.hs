@@ -51,6 +51,7 @@ spec =
         _500s `shouldRespondWith_` 500
         dontSucceed _500s
 
+
       it "should do Response Checks" $ do
         succeed (idGet 1) >>= liftIO . (`shouldBe` 1)
         succeed (idPut 2) >>= liftIO . (`shouldBe` 2)
@@ -60,6 +61,7 @@ spec =
         succeed (take' 2 [1,2,3,4,5]) >>= liftIO . (`shouldBe` [1,2])
         succeed (reqbodyLength "abc123") >>= liftIO . (`shouldBe` 6)
         succeed (someHeaderLength (Just "xyz987")) >>= liftIO . (`shouldBe` 6)
+        --succeed decodingError >>= liftIO . (`shouldBe` (BadValue True))
 
 type API =
        "api" :> "identity" :> Capture "arg" Int :> Get '[JSON] Int

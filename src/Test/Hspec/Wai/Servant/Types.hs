@@ -24,7 +24,7 @@ data TestRequest = TestRequest
   , testQuery   :: HT.Query
   , testHeaders :: [HT.Header]
   , testBody    :: BL.ByteString
-  }
+  } deriving (Show, Eq)
 
 defReq :: TestRequest
 defReq = TestRequest mempty mempty mempty mempty
@@ -46,7 +46,7 @@ setReqBody :: (MimeRender ct a) => Proxy ct -> a -> TestRequest -> TestRequest
 setReqBody ctP a req = req { testBody = mimeRender ctP a, testHeaders = ("content-type", HT.renderHeader (contentType ctP)) : testHeaders req }
 
 -- | A raw SResponse along with a function to decode @a@
-data TestResponse a = TestResponse (SResponse -> WaiSession a) SResponse
+data TestResponse a = TestResponse (SResponse -> WaiSession a) TestRequest SResponse
 
 getTestResponse :: TestResponse a -> WaiSession a
-getTestResponse (TestResponse k sresp) = k sresp
+getTestResponse (TestResponse k _ sresp) = k sresp

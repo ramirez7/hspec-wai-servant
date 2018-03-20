@@ -6,6 +6,7 @@
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -17,19 +18,20 @@
 module Test.Hspec.Wai.Servant.Client
   ( client
   , HasTestClient
+  , putExpectationFailure
   ) where
 
 import           Network.Wai.Test                                (SResponse (..))
 import           Test.Hspec.Wai
 
-import           Control.Exception                               (Exception)
 import qualified Data.ByteString.Char8                           as BC
 import qualified Data.CaseInsensitive                            as CI
 import           Data.Monoid                                     ((<>))
 import           Data.Proxy
-import           Data.Typeable                                   (Typeable)
+import           Data.Typeable                                   (Typeable,
+                                                                  showsTypeRep,
+                                                                  typeRep)
 import           GHC.TypeLits
-import qualified Network.HTTP.Media.MediaType                    as HT
 import qualified Network.HTTP.Media.RenderHeader                 as HT
 import qualified Network.HTTP.Types                              as HT
 import           Servant.API
@@ -52,28 +54,46 @@ performTestRequest method TestRequest{..} = request method pathWithQuery testHea
   where
     pathWithQuery = testPath <> HT.renderQuery True testQuery
 
-performTestRequestCT :: (MimeUnrender ct a, ReflectMethod method) => Proxy ct -> Proxy method -> TestRequest -> WaiSession (TestResponse a)
+performTestRequestCT
+  :: (MimeUnrender ct a, Typeable a, ReflectMethod method)
+  => Proxy ct
+  -> Proxy method
+  -> TestRequest
+  -> WaiSession (TestResponse a)
 performTestRequestCT ctP methodP req@TestRequest{..} =
   let method = reflectMethod methodP
       acceptCT = contentType ctP
       reqWithCt = req { testHeaders = ("accept", HT.renderHeader acceptCT) : testHeaders }
-  in TestResponse (decodeResponse ctP) <$> performTestRequest method reqWithCt
+  in TestResponse (decodeResponse req ctP) req <$> performTestRequest method reqWithCt
+
+
+-- | Will catch a failure and pack it in Either if a repsonse fails to parse.
+eitherDecodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> WaiSession (Either String a)
+eitherDecodeResponse ctProxy resp = return $ mimeUnrender ctProxy (simpleBody resp)
+
+putExpectationFailure :: String -> String -> SResponse -> TestRequest -> WaiSession ()
+putExpectationFailure err expected sres req = do
+  let ls = [ "response error: " ++ err
+           , "  expected:     " ++ expected
+           , "  got response: " ++ show sres
+           , "  from request: " ++ show req
+           ]
+  liftIO . expectationFailure $ unlines ls
 
 -- | Will throw and fail the test if a fails to parse
-decodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> WaiSession a
-decodeResponse ctProxy resp = liftIO $ either throwErr pure $ mimeUnrender ctProxy (simpleBody resp)
+decodeResponse
+  :: forall ctype a. (MimeUnrender ctype a, Typeable a)
+  => TestRequest
+  -> Proxy ctype
+  -> SResponse
+  -> WaiSession a
+decodeResponse req ctProxy resp =
+  eitherDecodeResponse ctProxy resp >>= either throwErr pure
   where
-    throwErr err = do
-      liftIO $ expectationFailure $ unlines [ "Failed decoding response:"
-                                            , show resp
-                                            , "with error:"
-                                            , show err
-                                            ]
-      error "unreachable"
-
-data Err = DecodeError !String !HT.MediaType !BC.ByteString deriving (Show, Typeable)
-
-instance Exception Err
+    typeStr = unwords [ "successful decoding of"
+                      , showsTypeRep (typeRep $ Proxy @a) ""
+                      ]
+    throwErr err = putExpectationFailure err typeStr resp req >> error "unreachable"
 
 -- | Type class to generate 'WaiSession'-based client handlers. Compare to
 -- 'HasClient' from 'Servant.Client'
@@ -90,6 +110,7 @@ instance (HasTestClient a, HasTestClient b) => HasTestClient (a :<|> b) where
     testClientWithRoute (Proxy :: Proxy b) req
 
 instance ( MimeUnrender ct a
+         , Typeable a
          , ReflectMethod method
          , cts' ~ (ct ': cts)
          ) => HasTestClient (Verb method status cts' a) where
