@@ -109,7 +109,25 @@ instance (HasTestClient a, HasTestClient b) => HasTestClient (a :<|> b) where
     testClientWithRoute (Proxy :: Proxy a) req :<|>
     testClientWithRoute (Proxy :: Proxy b) req
 
-instance ( MimeUnrender ct a
+instance {-# OVERLAPPING #-}
+         ( MimeUnrender ct a
+         , Typeable a
+         , BuildHeadersTo ls
+         , ReflectMethod method
+         , cts' ~ (ct ': cts)
+         ) => HasTestClient (Verb method status cts' (Headers ls a)) where
+  type TestClient (Verb method status cts' (Headers ls a)) = WaiSession (TestResponse (Headers ls a))
+
+  testClientWithRoute Proxy req = do
+    TestResponse k req' response :: TestResponse a <- performTestRequestCT ct method req
+    let mkHeaders v = Headers v $ buildHeadersTo $ simpleHeaders response
+    return $ TestResponse (fmap mkHeaders . k) req' response
+   where
+    ct = Proxy :: Proxy ct
+    method = Proxy :: Proxy method
+
+instance {-# OVERLAPPABLE #-}
+         ( MimeUnrender ct a
          , Typeable a
          , ReflectMethod method
          , cts' ~ (ct ': cts)
