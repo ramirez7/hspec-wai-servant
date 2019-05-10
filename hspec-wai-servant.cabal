@@ -35,7 +35,7 @@ library
     , text
     , mtl
     , servant
-    , servant-checked-exceptions < 2.0.0.0
+    , servant-checked-exceptions-core
   hs-source-dirs:      src
 
 test-suite spec
@@ -46,7 +46,7 @@ test-suite spec
       test
   ghc-options: -Wall
   build-depends:
-      base >=4.9 && <4.12
+      base >=4.9 && <4.13
     , aeson
     , hspec
     , servant
