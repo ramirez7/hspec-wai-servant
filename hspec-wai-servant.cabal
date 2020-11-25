@@ -23,7 +23,7 @@ library
     Test.Hspec.Wai.Servant.Types
   ghc-options: -Wall
   build-depends:
-      base >=4.9 && <4.13
+      base >=4.9 && <5
     , hspec-wai
     , hspec-expectations
     , wai-extra
@@ -46,7 +46,7 @@ test-suite spec
       test
   ghc-options: -Wall
   build-depends:
-      base >=4.9 && <4.13
+      base >=4.9 && <5
     , aeson
     , hspec
     , servant

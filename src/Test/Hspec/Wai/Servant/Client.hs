@@ -26,7 +26,6 @@ import           Test.Hspec.Wai
 
 import qualified Data.ByteString.Char8                           as BC
 import qualified Data.CaseInsensitive                            as CI
-import           Data.Monoid                                     ((<>))
 import           Data.Proxy
 import           Data.Typeable                                   (Typeable,
                                                                   showsTypeRep,
@@ -49,7 +48,7 @@ import           Test.Hspec.Wai.Servant.Types
 client :: HasTestClient api => Proxy api -> TestClient api
 client p = testClientWithRoute p defReq
 
-performTestRequest :: HT.Method -> TestRequest -> WaiSession SResponse
+performTestRequest :: HT.Method -> TestRequest -> WaiSession st SResponse
 performTestRequest method TestRequest{..} = request method pathWithQuery testHeaders testBody
   where
     pathWithQuery = testPath <> HT.renderQuery True testQuery
@@ -59,7 +58,7 @@ performTestRequestCT
   => Proxy ct
   -> Proxy method
   -> TestRequest
-  -> WaiSession (TestResponse a)
+  -> WaiSession st (TestResponse st a)
 performTestRequestCT ctP methodP req@TestRequest{..} =
   let method = reflectMethod methodP
       acceptCT = contentType ctP
@@ -68,10 +67,10 @@ performTestRequestCT ctP methodP req@TestRequest{..} =
 
 
 -- | Will catch a failure and pack it in Either if a repsonse fails to parse.
-eitherDecodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> WaiSession (Either String a)
+eitherDecodeResponse :: MimeUnrender ctype a => Proxy ctype -> SResponse -> WaiSession st (Either String a)
 eitherDecodeResponse ctProxy resp = return $ mimeUnrender ctProxy (simpleBody resp)
 
-putExpectationFailure :: String -> String -> SResponse -> TestRequest -> WaiSession ()
+putExpectationFailure :: String -> String -> SResponse -> TestRequest -> WaiSession st ()
 putExpectationFailure err expected sres req = do
   let ls = [ "response error: " ++ err
            , "  expected:     " ++ expected
@@ -82,11 +81,11 @@ putExpectationFailure err expected sres req = do
 
 -- | Will throw and fail the test if a fails to parse
 decodeResponse
-  :: forall ctype a. (MimeUnrender ctype a, Typeable a)
+  :: forall ctype a st. (MimeUnrender ctype a, Typeable a)
   => TestRequest
   -> Proxy ctype
   -> SResponse
-  -> WaiSession a
+  -> WaiSession st a
 decodeResponse req ctProxy resp =
   eitherDecodeResponse ctProxy resp >>= either throwErr pure
   where
@@ -116,10 +115,10 @@ instance {-# OVERLAPPING #-}
          , ReflectMethod method
          , cts' ~ (ct ': cts)
          ) => HasTestClient (Verb method status cts' (Headers ls a)) where
-  type TestClient (Verb method status cts' (Headers ls a)) = WaiSession (TestResponse (Headers ls a))
+  type TestClient (Verb method status cts' (Headers ls a)) = WaiSession () (TestResponse () (Headers ls a))
 
   testClientWithRoute Proxy req = do
-    TestResponse k req' response :: TestResponse a <- performTestRequestCT ct method req
+    TestResponse k req' response :: TestResponse () a <- performTestRequestCT ct method req
     let mkHeaders v = Headers v $ buildHeadersTo $ simpleHeaders response
     return $ TestResponse (fmap mkHeaders . k) req' response
    where
@@ -132,7 +131,7 @@ instance {-# OVERLAPPABLE #-}
          , ReflectMethod method
          , cts' ~ (ct ': cts)
          ) => HasTestClient (Verb method status cts' a) where
-  type TestClient (Verb method status cts' a) = WaiSession (TestResponse a)
+  type TestClient (Verb method status cts' a) = WaiSession () (TestResponse () a)
 
   testClientWithRoute Proxy req = performTestRequestCT ct method req
     where
