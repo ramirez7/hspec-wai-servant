@@ -11,7 +11,6 @@ import qualified Data.ByteString                 as B
 import qualified Data.ByteString.Char8           as BC
 import           Data.ByteString.Conversion.To   (toByteString')
 import qualified Data.ByteString.Lazy            as BL
-import           Data.Monoid                     ((<>))
 import           Data.Proxy                      (Proxy (..))
 import qualified Network.HTTP.Media.RenderHeader as HT
 import qualified Network.HTTP.Types              as HT
@@ -46,7 +45,7 @@ setReqBody :: (MimeRender ct a) => Proxy ct -> a -> TestRequest -> TestRequest
 setReqBody ctP a req = req { testBody = mimeRender ctP a, testHeaders = ("content-type", HT.renderHeader (contentType ctP)) : testHeaders req }
 
 -- | A raw SResponse along with a function to decode @a@
-data TestResponse a = TestResponse (SResponse -> WaiSession a) TestRequest SResponse
+data TestResponse st a = TestResponse (SResponse -> WaiSession st a) TestRequest SResponse
 
-getTestResponse :: TestResponse a -> WaiSession a
+getTestResponse :: TestResponse st a -> WaiSession st a
 getTestResponse (TestResponse k _ sresp) = k sresp

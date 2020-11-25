@@ -95,17 +95,17 @@ server = pure
     :<|> throwError err500
     :<|> pure (BadValue True)
 
-idGet :: Int -> WaiSession (TestResponse Int)
-idPut :: Int -> WaiSession (TestResponse Int)
-idDelete :: Int -> WaiSession (TestResponse Int)
-idPost :: Int -> WaiSession (TestResponse Int)
-qparamMaybeToList :: Maybe Int -> WaiSession (TestResponse [Int])
-take' :: Int -> [Int] -> WaiSession (TestResponse [Int])
-reqbodyLength :: B.ByteString -> WaiSession (TestResponse Int)
-someHeaderLength :: Maybe T.Text -> WaiSession (TestResponse Int)
-_400s :: WaiSession (TestResponse ())
-_500s :: WaiSession (TestResponse ())
-decodingError :: WaiSession (TestResponse BadValue)
+idGet :: Int -> WaiSession () (TestResponse () Int)
+idPut :: Int -> WaiSession () (TestResponse () Int)
+idDelete :: Int -> WaiSession () (TestResponse () Int)
+idPost :: Int -> WaiSession () (TestResponse () Int)
+qparamMaybeToList :: Maybe Int -> WaiSession () (TestResponse () [Int])
+take' :: Int -> [Int] -> WaiSession () (TestResponse () [Int])
+reqbodyLength :: B.ByteString -> WaiSession () (TestResponse () Int)
+someHeaderLength :: Maybe T.Text -> WaiSession () (TestResponse () Int)
+_400s :: WaiSession () (TestResponse () ())
+_500s :: WaiSession () (TestResponse () ())
+decodingError :: WaiSession () (TestResponse () BadValue)
 
 (      idGet
   :<|> idPut

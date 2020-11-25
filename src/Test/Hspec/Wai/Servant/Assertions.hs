@@ -25,9 +25,9 @@ import           Test.Hspec.Wai.Servant.Types
 -- 2) returns the response for later use
 shouldRespondWith
   :: HasCallStack
-  => W.WaiSession (TestResponse a)
+  => W.WaiSession st (TestResponse st a)
   -> W.ResponseMatcher
-  -> W.WaiSession (TestResponse a)
+  -> W.WaiSession st (TestResponse st a)
 shouldRespondWith action matcher = do
   tresp@(TestResponse _ _ sresp) <- action
   pure sresp `W.shouldRespondWith` matcher
@@ -36,14 +36,14 @@ shouldRespondWith action matcher = do
 -- | Like 'shouldRespondWith', but doesn't return the response
 shouldRespondWith_
   :: HasCallStack
-  => W.WaiSession (TestResponse a)
+  => W.WaiSession st (TestResponse st a)
   -> W.ResponseMatcher
-  -> W.WaiExpectation
+  -> W.WaiExpectation st
 shouldRespondWith_ = (void .) . shouldRespondWith
 
 -- | Checks if the provided @action@ returns 200. If so, attempts to decode
 -- the response.
-succeed :: HasCallStack => W.WaiSession (TestResponse a) -> W.WaiSession a
+succeed :: HasCallStack => W.WaiSession st (TestResponse st a) -> W.WaiSession st a
 succeed action = do
   tresp@(TestResponse _ req sres@(SResponse status _ _)) <- action
   if status == ok200
@@ -52,7 +52,7 @@ succeed action = do
 
 -- | Checks if the provided @action@ returns anything other than a 200. If so,
 -- sally forth.
-dontSucceed :: HasCallStack => W.WaiSession (TestResponse a) -> W.WaiSession ()
+dontSucceed :: HasCallStack => W.WaiSession st (TestResponse st a) -> W.WaiSession st ()
 dontSucceed action = do
   TestResponse _ req sres@(SResponse status _ _) <- action
   if status /= ok200
